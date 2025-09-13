@@ -6,7 +6,7 @@
 log.txt
 .vs
 .vscode
-.build
+build
 x64
 packages
 Debug
