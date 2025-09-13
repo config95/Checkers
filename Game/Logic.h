@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include <vector>
+#include <algorithm>
 
 #include "../Models/Move.h"
 #include "Board.h"
@@ -20,8 +21,20 @@ class Logic
     }
 
     vector<move_pos> find_best_turns(bool color) {
-    // TODO: реализовать по заданию №22
-    return {};
+    next_best_state.clear();
+    next_move.clear();
+
+    // корневое состояние = 0 (x=y=-1 означает "серия добиваний не начата")
+    find_first_best_turn(board->get_board(), color, -1, -1, /*state=*/0);
+
+    int cur = 0;
+    vector<move_pos> res;
+    while (cur != -1 && cur < (int)next_move.size() && next_move[cur].x != -1) {
+        res.push_back(next_move[cur]);
+        if (cur >= (int)next_best_state.size()) break;
+        cur = next_best_state[cur];
+    }
+    return res;
     }
 
 
@@ -103,15 +116,109 @@ private:
     double find_first_best_turn(vector<vector<POS_T>> mtx, const bool color, const POS_T x, const POS_T y, size_t state,
                                 double alpha = -1)
     {
-        // TODO: реализовать по заданию №22
-        return 0.0;
+        // регистрируем узел в восстановителе
+        next_best_state.push_back(-1);
+        next_move.emplace_back(-1, -1, -1, -1);
+
+        double best_score = -1; // «худшая» стартовая оценка (мы минимизируем через calc_score, см. ниже)
+
+        // если state != 0, значит это продолжение серии взятий и нужно искать ходы из (x,y)
+        if (state != 0) {
+            find_turns(x, y, mtx);
+        }
+        auto turns_now = turns;
+        bool have_beats_now = have_beats;
+
+        // если ходы с взятием закончились, серия завершилась — передаём ход оппоненту
+        if (!have_beats_now && state != 0) {
+            return find_best_turns_rec(mtx, /*color=*/!color, /*depth=*/0, alpha);
+        }
+
+        for (const auto& turn : turns_now) {
+            size_t child_state = next_move.size();
+
+            double score;
+            if (have_beats_now) {
+                // продолжаем серию: игрок не меняется, фиксируем текущую фигуру (x2,y2)
+                score = find_first_best_turn(make_turn(mtx, turn), color,
+                                            turn.x2, turn.y2, child_state, best_score);
+            } else {
+                // обычный ход: меняем сторону и запускаем minimax с глубины 0
+                score = find_best_turns_rec(make_turn(mtx, turn), /*color=*/!color,
+                                            /*depth=*/0, /*alpha=*/best_score);
+            }
+
+            if (score > best_score) {
+                best_score = score;
+                next_move[state] = turn;
+                next_best_state[state] = (have_beats_now ? (int)child_state : -1);
+            }
+        }
+        return best_score;
     }
 
     double find_best_turns_rec(vector<vector<POS_T>> mtx, const bool color, const size_t depth, double alpha = -1,
                                double beta = INF + 1, const POS_T x = -1, const POS_T y = -1)
     {
-        // TODO: реализовать по заданию №22
-        return 0.0;
+        // ограничение по глубине
+        if (depth == (size_t)Max_depth) {
+            // first_bot_color = (depth % 2 == color) — кто сейчас «максимизатор»
+            return calc_score(mtx, (depth % 2 == (size_t)color));
+        }
+
+        // генерируем ходы: либо для конкретной фигуры, либо все ходы цвета
+        if (x != -1) {
+            find_turns(x, y, mtx);
+        } else {
+            find_turns(color, mtx);
+        }
+        auto turns_now = turns;
+        bool have_beats_now = have_beats;
+
+        // если продолжаем серию, но ударов нет — серия закончена, меняем сторону и увеличиваем глубину
+        if (!have_beats_now && x != -1) {
+            return find_best_turns_rec(mtx, !color, depth + 1, alpha, beta);
+        }
+
+        // терминальный узел: ходов совсем нет
+        if (turns_now.empty()) {
+            // если ходить некому — мат. Для MAX (depth%2==color) это 0, для MIN — INF
+            return (depth % 2 ? 0 : INF);
+        }
+
+        double best_min = INF + 1; // для MIN-уровней
+        double best_max = -1;      // для MAX-уровней
+
+        for (const auto& turn : turns_now) {
+            double score;
+            if (!have_beats_now && x == -1) {
+                // обычный ход: меняем сторону, увеличиваем глубину
+                score = find_best_turns_rec(make_turn(mtx, turn), !color, depth + 1, alpha, beta);
+            } else {
+                // продолжение серии взятий: ход остаётся за той же стороной, глубина не растёт
+                score = find_best_turns_rec(make_turn(mtx, turn), color, depth, alpha, beta, turn.x2, turn.y2);
+            }
+
+            // обновляем экстремумы
+            if (score < best_min) best_min = score;
+            if (score > best_max) best_max = score;
+
+            // depth % 2 == 1 → MAX-уровень (обновляем alpha),
+            // depth % 2 == 0 → MIN-уровень (обновляем beta).
+            if (depth % 2) {
+                alpha = std::max(alpha, best_max);
+            } else {
+                beta  = std::min(beta,  best_min);
+            }
+
+            if (optimization != "O0" && alpha >= beta) {
+                // лёгкая «сдвижка» для стабильности выбора при равенствах
+                return (depth % 2 ? best_max + 1 : best_min - 1);
+            }
+        }
+
+        // выбираем, что вернуть, в зависимости от уровня (MIN/ MAX)
+        return (depth % 2 ? best_max : best_min);
     }
 
 public:
