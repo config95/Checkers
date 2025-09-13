@@ -23,8 +23,18 @@ class Config
     void reload()
     {
         std::ifstream fin(project_path + "settings.json");
-        fin >> config;
+        if (!fin) {
+            throw std::runtime_error("Не удалось открыть settings.json");
+        }
+
+        // Читаем всё содержимое файла в строку
+        std::string content((std::istreambuf_iterator<char>(fin)),
+                            std::istreambuf_iterator<char>());
         fin.close();
+
+        // Разбираем, разрешив комментарии
+        config = json::parse(content, nullptr, true,
+                             true);
     }
 
 
