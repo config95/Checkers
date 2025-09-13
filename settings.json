@@ -1,19 +1,19 @@
 {
-    "WindowSize": {
-        "Width": 0,
-        "Hight": 0
-    },
-    "Bot": {
-        "IsWhiteBot": false,
-        "IsBlackBot": true,
-        "WhiteBotLevel": 0,
-        "BlackBotLevel": 5,
-        "BotScoringType": "NumberAndPotential",
-        "BotDelayMS": 0,
-        "NoRandom": false,
-        "Optimization": "O1"
-    },
-    "Game": {
-        "MaxNumTurns": 120
-    }
+  "WindowSize": {                     // настройки окна игры
+    "Width": 1280,                    // ширина окна в пикселях
+    "Hight": 720                      // высота окна в пикселях
+  },
+  "Bot": {                            // настройки ботов
+    "IsWhiteBot": false,              // false = белыми играет человек, true = бот
+    "IsBlackBot": true,               // true = чёрными играет бот
+    "WhiteBotLevel": 0,               // уровень сложности бота за белых
+    "BlackBotLevel": 5,               // уровень сложности бота за чёрных
+    "BotScoringType": "NumberAndPotential", // метод оценки: только количество шашек или ещё и позиция
+    "BotDelayMS": 0,                  // задержка в миллисекундах перед ходом бота (0 = ходит сразу)
+    "NoRandom": false,                // false = выбирает случайно из равных ходов, true = всегда один и тот же
+    "Optimization": "O1"              // алгоритм поиска: O0 = без оптимизации, O1 = с alpha–beta отсечением
+  },
+  "Game": {                           // настройки самой партии
+    "MaxNumTurns": 120                // ограничение на количество полуходов (после этого ничья)
+  }
 }

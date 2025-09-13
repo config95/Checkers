@@ -1,3 +1,0 @@
-/Users/annala/Checkers/build/CMakeFiles/Checkers.dir
-/Users/annala/Checkers/build/CMakeFiles/edit_cache.dir
-/Users/annala/Checkers/build/CMakeFiles/rebuild_cache.dir
