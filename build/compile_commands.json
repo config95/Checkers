@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/annala/Checkers/build",
+  "command": "/usr/bin/clang++ -isystem /Users/annala/vcpkg/installed/arm64-osx/include -isystem /Users/annala/vcpkg/installed/arm64-osx/include/SDL2 -g -std=gnu++17 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/Checkers.dir/main.cpp.o -c /Users/annala/Checkers/main.cpp",
+  "file": "/Users/annala/Checkers/main.cpp",
+  "output": "/Users/annala/Checkers/build/CMakeFiles/Checkers.dir/main.cpp.o"
+}
+]
